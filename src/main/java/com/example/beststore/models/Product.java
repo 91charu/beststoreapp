@@ -24,6 +24,8 @@ import java.util.Date;
 
         private String imageFileName;
 
+        public  Product(){}
+
         public Product(String name, String brand, String category, double price, Date createdAt, String description, String imageFileName) {
             this.name = name;
             this.brand = brand;
