@@ -82,7 +82,16 @@ public class ProductsController {
 
         }
 
+         Product product = new Product();
+        product.setName(productDto.getName());
+        product.setBrand(productDto.getBrand());
+        product.setCategory(productDto.getCategory());
+        product.setPrice(productDto.getPrice());
+        product.setDescription(productDto.getDescription());
+        product.setCreatedAt(createdAt);
+        product.setImageFileName(storageFileName);
 
+        repo.save(product);
 
         return "redirect:/products";
     }
