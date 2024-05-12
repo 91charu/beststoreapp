@@ -50,6 +50,8 @@ public class ProductsController {
         if(result.hasErrors()){
             return "createproduct";
         }
+
+        //save image file
         return "redirect:/products";
     }
 
