@@ -143,57 +143,109 @@ public class ProductsController {
     }
 
 
+//    @PostMapping("/edit")
+//    public String updateProduct(Model model, @RequestParam int id, @Valid @ModelAttribute ProductDto productDto, BindingResult result) {
+//
+//       try {
+//           Product product = repo.findById(id).get();
+//           model.addAttribute("product", product);
+//
+//           if(result.hasErrors()) {
+//               return "editproduct";
+//           }
+//
+//           if(productDto.getImageFile().isEmpty()) {
+//               //delete old image
+//               String uploadDir = "public/images/";
+//               Path oldImagepath = Paths.get(uploadDir + product.getImageFileName());
+//
+//               try {
+//                   Files.delete(oldImagepath);
+//               }
+//
+//               catch(Exception ex) {
+//                   System.out.println("Exception: " + ex.getMessage());
+//               }
+//
+//               //save new image file
+//               MultipartFile image = productDto.getImageFile();
+//               Date createdAt = new Date();
+//               String storageFileName = createdAt.getTime() + "_" + image.getOriginalFilename();
+//
+//               try(InputStream inputStream = image.getInputStream()) {
+//                   Files.copy(inputStream, Paths.get(uploadDir+storageFileName),
+//                   StandardCopyOption.REPLACE_EXISTING);
+//               }
+//               product.setImageFileName(storageFileName);
+//           }
+//
+//           product.setName(productDto.getName());
+//           product.setBrand(productDto.getBrand());
+//           product.setCategory(productDto.getCategory());
+//           product.setPrice(productDto.getPrice());
+//           product.setDescription(productDto.getDescription());
+//
+//           repo.save(product);
+//       }
+//       catch(Exception ex) {
+//           System.out.println("Exception: " + ex.getMessage());
+//       }
+//
+//
+//        return "redirect:/products";
+//    }
+
     @PostMapping("/edit")
     public String updateProduct(Model model, @RequestParam int id, @Valid @ModelAttribute ProductDto productDto, BindingResult result) {
 
-       try {
-           Product product = repo.findById(id).get();
-           model.addAttribute("product", product);
+        try {
+            Product product = repo.findById(id).orElse(null);
+            if (product == null) {
+                return "redirect:/products";
+            }
+            model.addAttribute("product", product);
 
-           if(result.hasErrors()) {
-               return "editproduct";
-           }
+            if (result.hasErrors()) {
+                return "editproduct";
+            }
 
-           if(productDto.getImageFile().isEmpty()) {
-               //delete old image
-               String uploadDir = "public/images/";
-               Path oldImagepath = Paths.get(uploadDir + product.getImageFileName());
+            if (!productDto.getImageFile().isEmpty()) {
+                // Delete old image
+                String uploadDir = "public/images/";
+                Path oldImagePath = Paths.get(uploadDir + product.getImageFileName());
 
-               try {
-                   Files.delete(oldImagepath);
-               }
+                try {
+                    Files.delete(oldImagePath);
+                } catch (Exception ex) {
+                    System.out.println("Exception: " + ex.getMessage());
+                }
 
-               catch(Exception ex) {
-                   System.out.println("Exception: " + ex.getMessage());
-               }
+                // Save new image file
+                MultipartFile image = productDto.getImageFile();
+                Date createdAt = new Date();
+                String storageFileName = createdAt.getTime() + "_" + image.getOriginalFilename();
 
-               //save new image file
-               MultipartFile image = productDto.getImageFile();
-               Date createdAt = new Date();
-               String storageFileName = createdAt.getTime() + "_" + image.getOriginalFilename();
+                try (InputStream inputStream = image.getInputStream()) {
+                    Files.copy(inputStream, Paths.get(uploadDir + storageFileName), StandardCopyOption.REPLACE_EXISTING);
+                }
+                product.setImageFileName(storageFileName);
+            }
 
-               try(InputStream inputStream = image.getInputStream()) {
-                   Files.copy(inputStream, Paths.get(uploadDir+storageFileName),
-                   StandardCopyOption.REPLACE_EXISTING);
-               }
-               product.setImageFileName(storageFileName);
-           }
+            // Update other product details
+            product.setName(productDto.getName());
+            product.setBrand(productDto.getBrand());
+            product.setCategory(productDto.getCategory());
+            product.setPrice(productDto.getPrice());
+            product.setDescription(productDto.getDescription());
 
-           product.setName(productDto.getName());
-           product.setBrand(productDto.getBrand());
-           product.setCategory(productDto.getCategory());
-           product.setPrice(productDto.getPrice());
-           product.setDescription(productDto.getDescription());
-
-           repo.save(product);
-       }
-       catch(Exception ex) {
-           System.out.println("Exception: " + ex.getMessage());
-       }
-
+            repo.save(product);
+        } catch (Exception ex) {
+            System.out.println("Exception: " + ex.getMessage());
+        }
 
         return "redirect:/products";
     }
+
 }
 
 
