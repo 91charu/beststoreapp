@@ -93,13 +93,38 @@ public class ProductsController {
         return "redirect:/products";
     }
 
+//    @GetMapping("/edit")
+//    public String showEditPage(Model model, @RequestParam int id) {
+//
+//        try {
+//            Product product = repo.findById(id).get();
+//            model.addAttribute("product", product);
+//
+//            ProductDto productDto = new ProductDto();
+//            productDto.setName(product.getName());
+//            productDto.setBrand(product.getBrand());
+//            productDto.setCategory(product.getCategory());
+//            productDto.setPrice(product.getPrice());
+//            productDto.setDescription(product.getDescription());
+//
+//        }
+//        catch(Exception ex) {
+//            System.out.println("Exception: " + ex.getMessage());
+//            return "redirect:/products";
+//        }
+//        return "editproduct";
+
     @GetMapping("/edit")
     public String showEditPage(Model model, @RequestParam int id) {
 
         try {
-            Product product = repo.findById(id).get();
+            Product product = repo.findById(id).orElse(null);
+            if (product == null) {
+                return "redirect:/products";
+            }
             model.addAttribute("product", product);
 
+            // Create a ProductDto and populate it with product data
             ProductDto productDto = new ProductDto();
             productDto.setName(product.getName());
             productDto.setBrand(product.getBrand());
@@ -107,12 +132,68 @@ public class ProductsController {
             productDto.setPrice(product.getPrice());
             productDto.setDescription(product.getDescription());
 
-        }
-        catch(Exception ex) {
+            // Add the productDto to the model
+            model.addAttribute("productDto", productDto);
+
+        } catch (Exception ex) {
             System.out.println("Exception: " + ex.getMessage());
             return "redirect:/products";
         }
         return "editproduct";
     }
 
+
+    @PostMapping("/edit")
+    public String updateProduct(Model model, @RequestParam int id, @Valid @ModelAttribute ProductDto productDto, BindingResult result) {
+
+       try {
+           Product product = repo.findById(id).get();
+           model.addAttribute("product", product);
+
+           if(result.hasErrors()) {
+               return "editproduct";
+           }
+
+           if(productDto.getImageFile().isEmpty()) {
+               //delete old image
+               String uploadDir = "public/images/";
+               Path oldImagepath = Paths.get(uploadDir + product.getImageFileName());
+
+               try {
+                   Files.delete(oldImagepath);
+               }
+
+               catch(Exception ex) {
+                   System.out.println("Exception: " + ex.getMessage());
+               }
+
+               //save new image file
+               MultipartFile image = productDto.getImageFile();
+               Date createdAt = new Date();
+               String storageFileName = createdAt.getTime() + "_" + image.getOriginalFilename();
+
+               try(InputStream inputStream = image.getInputStream()) {
+                   Files.copy(inputStream, Paths.get(uploadDir+storageFileName),
+                   StandardCopyOption.REPLACE_EXISTING);
+               }
+               product.setImageFileName(storageFileName);
+           }
+
+           product.setName(productDto.getName());
+           product.setBrand(productDto.getBrand());
+           product.setCategory(productDto.getCategory());
+           product.setPrice(productDto.getPrice());
+           product.setDescription(productDto.getDescription());
+
+           repo.save(product);
+       }
+       catch(Exception ex) {
+           System.out.println("Exception: " + ex.getMessage());
+       }
+
+
+        return "redirect:/products";
+    }
 }
+
+
